@@ -33,6 +33,7 @@ MANIFEST
 flowers/
 data/
 wandb/
+*.tar.gz
 
 # vscode setting
 .vscode/
