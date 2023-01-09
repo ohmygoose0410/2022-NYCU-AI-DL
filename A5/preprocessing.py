@@ -9,7 +9,11 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import argparse
 
-def obtain_path(img_dir: str, mask_dir: str, target_path: str) -> None:
+def obtain_path(
+    img_dir: str,
+    mask_dir: str,
+    target_path: str
+) -> None:
     img_dir = Path(img_dir)
     mask_dir = Path(mask_dir)
     imgPaths = []
@@ -33,11 +37,18 @@ def obtain_path(img_dir: str, mask_dir: str, target_path: str) -> None:
         json.dump(data, jsonfile)
 
 class MyDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset_json_path: str, img_transforms: transforms.Compose, mask_transforms: transforms.Compose):
-        with open(dataset_json_path, 'r') as jsonfile:
-            data = json.load(jsonfile)
-            self.imgPaths = data['imgPaths']
-            self.maskPaths = data['maskPaths']
+    def __init__(self,
+    dataset: dict,
+    img_transforms,
+    mask_transforms,
+    dataset_type: str = 'train'
+):
+        dataset_types = ['train', 'test', 'valid']
+        if dataset_type not in dataset_types:
+            raise ValueError("Invalid dataset type. Expected one of: %s" % dataset_types)
+        
+        self.imgPaths = dataset[f'{dataset_type}_img']
+        self.maskPaths = dataset[f'{dataset_type}_mask']
         
         self.img_transforms=img_transforms
         self.mask_transforms=mask_transforms
@@ -54,6 +65,34 @@ class MyDataset(torch.utils.data.Dataset):
             mask = self.mask_transforms(mask)
         return image, mask
 
+def divide_dataset(
+    dataset_json: str,
+    lengths: list = [0.7,0.1,0.2]
+) -> dict:
+
+    # lengths -> [train_set_size, valid_set_size, test_set_size]
+    with open(dataset_json) as jsonfile:
+        data_load = json.load(jsonfile)
+        imPaths = np.array(data_load['imgPaths'])
+        maskPaths = np.array(data_load['maskPaths'])
+    train_set_size = int(len(imPaths) * lengths[0])
+    valid_set_size = int(len(imPaths) * lengths[1])
+    test_set_size = len(imPaths) - train_set_size - valid_set_size
+
+    dataset  = torch.utils.data.random_split(range(len(imPaths)),
+                                            [train_set_size,valid_set_size,test_set_size],
+                                            torch.Generator().manual_seed(42))
+
+    data = {}
+    data['train_img'] = imPaths[dataset[0]]
+    data['train_mask'] = maskPaths[dataset[0]]
+    data['valid_img'] = imPaths[dataset[1]]
+    data['valid_mask'] = maskPaths[dataset[1]]
+    data['test_img'] = imPaths[dataset[2]]
+    data['test_mask'] = maskPaths[dataset[2]]
+
+    return data    
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-orig_img_dir',type=str)
@@ -62,6 +101,10 @@ if __name__=="__main__":
     parser.add_argument('-save_samples',type=str)
     args = parser.parse_args()
 
+    torch.manual_seed(42)
+    torch.backends.cudnn.deterministic = True
+
+    print(args.save_samples)
     if args.save_samples != '':
         os.makedirs(args.save_samples, exist_ok=True)
         for sample in Path(args.save_samples).glob('*.*'):
@@ -77,7 +120,6 @@ if __name__=="__main__":
                                    transforms.Normalize(channel_means, channel_stds)])
     mask_tsfm=transforms.Compose([transforms.ToTensor()])
 
-    dataset = MyDataset(args.save_json, None, None)
     # dataset = MyDataset('./dataset.json', img_tsfm, mask_tsfm)
     # dataloader = torch.utils.data.DataLoader( dataset,
     #                                           batch_size=1,
@@ -85,8 +127,21 @@ if __name__=="__main__":
     #                                           num_workers=0,
     #                                           pin_memory=True)
 
-    _iterator_ = iter(dataset)
-    for i in range(5):
+
+    dataset = divide_dataset(args.save_json, [0.7,0.1,0.2])
+    print("train_img_size: ", len(dataset['train_img']))
+    print("train_mask_size: ", len(dataset['train_mask']))
+    print("valid_img_size: ", len(dataset['valid_img']))
+    print("valid_mask_size: ", len(dataset['valid_mask']))
+    print("test_img_size: ", len(dataset['test_img']))
+    print("test_mask_size: ", len(dataset['test_mask']))
+
+    train_set = MyDataset(dataset, None, None, 'train')
+    valid_set = MyDataset(dataset, None, None, 'valid')
+    test_set = MyDataset(dataset, None, None, 'test')
+
+    _iterator_ = iter(valid_set)
+    for i in range(3):
         data = next(_iterator_)
         fig = plt.figure()
         ax = fig.add_subplot(131)

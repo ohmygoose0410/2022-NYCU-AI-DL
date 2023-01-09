@@ -7,7 +7,7 @@ then
         -orig_msk_dir ./dataset/masks \
         -save_json ./dataset/dataset.json \
         -save_samples ./dataset/samples
-
+    
 else
     echo "python3 could not be found~~"
 fi
