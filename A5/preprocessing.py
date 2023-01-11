@@ -5,7 +5,7 @@ import torch
 import torchvision.transforms as transforms
 from tqdm import tqdm
 import json
-import matplotlib.image as mpimg
+from PIL import Image
 import matplotlib.pyplot as plt
 import argparse
 
@@ -57,8 +57,10 @@ class MyDataset(torch.utils.data.Dataset):
         return len(self.imgPaths)
 
     def __getitem__(self, idx):
-        image = mpimg.imread(self.imgPaths[idx])
-        mask = mpimg.imread(self.maskPaths[idx])
+        image = Image.open(self.imgPaths[idx])
+        image = image.resize((448,448))
+        mask = Image.open(self.maskPaths[idx])
+        mask = mask.resize((448,448))
         if self.img_transforms is not None:
             image = self.img_transforms(image)
         if self.mask_transforms is not None:
@@ -143,6 +145,8 @@ if __name__=="__main__":
     _iterator_ = iter(valid_set)
     for i in range(3):
         data = next(_iterator_)
+        print("img shape: ", np.shape(data[0]))
+        print("mask shape: ", np.shape(data[1]))
         fig = plt.figure()
         ax = fig.add_subplot(131)
         ax.get_xaxis().set_visible(False)
