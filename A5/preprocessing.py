@@ -95,12 +95,12 @@ def divide_dataset(
     data['test_mask'] = maskPaths[dataset[2]]
 
     if show:
-        print("train_img_size: ", len(dataset['train_img']))
-        print("train_mask_size: ", len(dataset['train_mask']))
-        print("valid_img_size: ", len(dataset['valid_img']))
-        print("valid_mask_size: ", len(dataset['valid_mask']))
-        print("test_img_size: ", len(dataset['test_img']))
-        print("test_mask_size: ", len(dataset['test_mask']))
+        print("train_img_size: ", len(data['train_img']))
+        print("train_mask_size: ", len(data['train_mask']))
+        print("valid_img_size: ", len(data['valid_img']))
+        print("valid_mask_size: ", len(data['valid_mask']))
+        print("test_img_size: ", len(data['test_img']))
+        print("test_mask_size: ", len(data['test_mask']))
 
     return data    
 
@@ -138,8 +138,8 @@ if __name__=="__main__":
     #                                           num_workers=0,
     #                                           pin_memory=True)
 
-
-    dataset = divide_dataset(args.save_json, [0.7,0.1,0.2], True)
+    json_path = args.save_json
+    dataset = divide_dataset(json_path, [0.7,0.1,0.2], True)
 
     train_set = MyDataset(dataset, None, None, 'train')
     valid_set = MyDataset(dataset, None, None, 'valid')
@@ -148,8 +148,6 @@ if __name__=="__main__":
     _iterator_ = iter(valid_set)
     for i in range(3):
         data = next(_iterator_)
-        print("img shape: ", np.shape(data[0]))
-        print("mask shape: ", np.shape(data[1]))
         fig = plt.figure()
         ax = fig.add_subplot(131)
         ax.get_xaxis().set_visible(False)
