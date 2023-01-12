@@ -69,7 +69,8 @@ class MyDataset(torch.utils.data.Dataset):
 
 def divide_dataset(
     dataset_json: str,
-    lengths: list = [0.7,0.1,0.2]
+    lengths: list = [0.7,0.1,0.2],
+    show: bool = False
 ) -> dict:
 
     # lengths -> [train_set_size, valid_set_size, test_set_size]
@@ -92,6 +93,14 @@ def divide_dataset(
     data['valid_mask'] = maskPaths[dataset[1]]
     data['test_img'] = imPaths[dataset[2]]
     data['test_mask'] = maskPaths[dataset[2]]
+
+    if show:
+        print("train_img_size: ", len(dataset['train_img']))
+        print("train_mask_size: ", len(dataset['train_mask']))
+        print("valid_img_size: ", len(dataset['valid_img']))
+        print("valid_mask_size: ", len(dataset['valid_mask']))
+        print("test_img_size: ", len(dataset['test_img']))
+        print("test_mask_size: ", len(dataset['test_mask']))
 
     return data    
 
@@ -130,13 +139,7 @@ if __name__=="__main__":
     #                                           pin_memory=True)
 
 
-    dataset = divide_dataset(args.save_json, [0.7,0.1,0.2])
-    print("train_img_size: ", len(dataset['train_img']))
-    print("train_mask_size: ", len(dataset['train_mask']))
-    print("valid_img_size: ", len(dataset['valid_img']))
-    print("valid_mask_size: ", len(dataset['valid_mask']))
-    print("test_img_size: ", len(dataset['test_img']))
-    print("test_mask_size: ", len(dataset['test_mask']))
+    dataset = divide_dataset(args.save_json, [0.7,0.1,0.2], True)
 
     train_set = MyDataset(dataset, None, None, 'train')
     valid_set = MyDataset(dataset, None, None, 'valid')
