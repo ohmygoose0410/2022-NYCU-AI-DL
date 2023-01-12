@@ -57,7 +57,7 @@ class ResBlock(nn.Module):
 
 class ResUNet(nn.Module):
     def __init__(self, Block, DecBlock):
-        super(ResUNet, self).__init__()
+        super().__init__()
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
         self.bn1 = nn.BatchNorm2d(64)
@@ -69,15 +69,15 @@ class ResUNet(nn.Module):
         self.Layer_5 = self.Layer(256, 512, 2, 3, Block)
         self.center = DecBlock(512, 512, 256)
         self.Dec_Layer_5 = DecBlock(768, 512, 256)
-        self.Dec_Layer_4 = DecBlock(512, 256, 128)
-        self.Dec_Layer_3 = DecBlock(256, 128, 64)
-        self.Dec_Layer_2 = DecBlock(128, 64, 32)
-        self.Dec_Layer_1 = DecBlock(32, 32, 32)
+        self.Dec_Layer_4 = DecBlock(512, 512, 256)
+        self.Dec_Layer_3 = DecBlock(384, 256, 64)
+        self.Dec_Layer_2 = DecBlock(128, 128, 128)
+        self.Dec_Layer_1 = DecBlock(128, 128, 32)
         self.Dec_Layer_0 = nn.Sequential(
             nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True)
         )
-        self.final = nn.Conv2d(32, 7, kernel_size=1, stride=1)
+        self.final = nn.Conv2d(32, 8, kernel_size=1, stride=1)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

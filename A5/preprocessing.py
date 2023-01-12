@@ -58,9 +58,9 @@ class MyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         image = Image.open(self.imgPaths[idx])
-        image = image.resize((448,448))
+        image = image.resize((448,448), resample=Image.NEAREST)
         mask = Image.open(self.maskPaths[idx])
-        mask = mask.resize((448,448))
+        mask = mask.resize((448,448), resample=Image.NEAREST)
         if self.img_transforms is not None:
             image = self.img_transforms(image)
         if self.mask_transforms is not None:
@@ -148,6 +148,7 @@ if __name__=="__main__":
     _iterator_ = iter(valid_set)
     for i in range(3):
         data = next(_iterator_)
+        print("max value: ",np.amin(data[1]))
         fig = plt.figure()
         ax = fig.add_subplot(131)
         ax.get_xaxis().set_visible(False)
