@@ -7,24 +7,33 @@ def show_size(text: str, output_size, debug: bool=False):
     if debug:
         print(f"{text} size: ", output_size)
 
+class Interpolate(nn.Module):
+    def __init__(self, size=None, scale_factor=None, mode='nearest', align_corners=False):
+        super(Interpolate, self).__init__()
+        self.interp = nn.functional.interpolate
+        self.size = size
+        self.mode = mode
+        self.scale_factor = scale_factor
+        self.align_corners = align_corners
+
+    def forward(self, x):
+        x = self.interp(x, size=self.size, scale_factor=self.scale_factor,
+                        mode=self.mode, align_corners=self.align_corners)
+        return x
+
 class DecBlock(nn.Module):
     def __init__(self, input, middle, output):
         super(DecBlock, self).__init__()
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = nn.Conv2d(input, middle, kernel_size=3, padding=1)
-        self.convTrans1 = nn.ConvTranspose2d(middle, output, kernel_size=4, stride=2, padding=1)
-        # self.block = nn.Sequential(
-        #     nn.Conv2d(input, middle, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.ConvTranspose2d(middle, output, kernel_size=4, stride=2, padding=1),
-        #     nn.ReLU(inplace=True)
-        # )
+        self.conv2 = nn.Conv2d(middle, output, kernel_size=3, padding=1)
+        self.up = Interpolate(scale_factor=2, mode='bilinear')
 
     def forward(self, x):
-        output = self.relu(self.conv1(x))
-        output = self.relu(self.convTrans1(output))
+        output = self.up(x)
+        output = self.relu(self.conv1(output))
+        output = self.relu(self.conv2(output))
         return output
-        # return self.block(x)
 
 class ResBlock(nn.Module):
     def __init__(self, input: int, output: int, conv1_str: int):
@@ -35,25 +44,24 @@ class ResBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = nn.Conv2d(input, output, kernel_size=3, stride=self.conv1_str, padding=1)
         self.conv2 = nn.Conv2d(output, output, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(output)
+        self.bn1 = nn.BatchNorm2d(input)
         self.bn2 = nn.BatchNorm2d(output)
 
         self.downsample = nn.Sequential(nn.Conv2d(input, output, kernel_size=1, stride=2),
                                         nn.BatchNorm2d(output))
     def forward(self, x):
         add = x
-        output = self.conv1(x)
-        output = self.relu(self.bn1(output))
-        output = self.conv2(output)
+        output = self.bn1(x)
+        output = self.relu(output)
+        output = self.conv1(output)
         output = self.bn2(output)
+        output = self.relu(output)
+        output = self.conv2(output)
 
         if self.conv1_str != 1 or self.input != self.output:
             add = self.downsample(x)
 
-        output += add
-        output = self.relu(output)
-
-        return output
+        return output + add
 
 class ResUNet(nn.Module):
     def __init__(self, Block, DecBlock):
@@ -69,10 +77,10 @@ class ResUNet(nn.Module):
         self.Layer_5 = self.Layer(256, 512, 2, 3, Block)
         self.center = DecBlock(512, 512, 256)
         self.Dec_Layer_5 = DecBlock(768, 512, 256)
-        self.Dec_Layer_4 = DecBlock(512, 512, 256)
-        self.Dec_Layer_3 = DecBlock(384, 256, 64)
-        self.Dec_Layer_2 = DecBlock(128, 128, 128)
-        self.Dec_Layer_1 = DecBlock(128, 128, 32)
+        self.Dec_Layer_4 = DecBlock(512, 256, 128)
+        self.Dec_Layer_3 = DecBlock(256, 128, 64)
+        self.Dec_Layer_2 = DecBlock(128, 64, 32)
+        self.Dec_Layer_1 = DecBlock(32, 32, 32)
         self.Dec_Layer_0 = nn.Sequential(
             nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True)
@@ -88,7 +96,7 @@ class ResUNet(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, x):
-        debug = False
+        debug = True
         # show_size("input", x.size(), debug)
         output = self.conv1(x)
         output = self.relu(self.bn1(output))
@@ -136,6 +144,6 @@ class ResUNet(nn.Module):
 
 
 if __name__=="__main__":
-    input = torch.rand(4, 3, 448, 448)
+    input = torch.rand(4, 3, 512, 512)
     model = ResUNet(Block=ResBlock, DecBlock=DecBlock)
     model(input)
