@@ -96,8 +96,8 @@ class ResUNet(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, x):
-        debug = True
-        # show_size("input", x.size(), debug)
+        debug = False
+        show_size("input", x.size(), debug)
         output = self.conv1(x)
         output = self.relu(self.bn1(output))
         conv1 = self.pool1(output)
