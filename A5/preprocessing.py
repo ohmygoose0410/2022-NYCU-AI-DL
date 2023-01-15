@@ -8,6 +8,7 @@ import json
 from PIL import Image
 import matplotlib.pyplot as plt
 import argparse
+import random
 
 def obtain_path(
     img_dir: str,
@@ -42,7 +43,7 @@ class MyDataset(torch.utils.data.Dataset):
     img_transforms,
     mask_transforms,
     dataset_type: str = 'train'
-):
+) -> None:
         dataset_types = ['train', 'test', 'valid']
         if dataset_type not in dataset_types:
             raise ValueError("Invalid dataset type. Expected one of: %s" % dataset_types)
@@ -58,13 +59,18 @@ class MyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         image = Image.open(self.imgPaths[idx])
-        image = image.resize((512,512), resample=Image.NEAREST)
         mask = Image.open(self.maskPaths[idx])
-        mask = mask.resize((512,512), resample=Image.NEAREST)
+        seed = np.random.randint(2147483647) # make a seed with numpy generator 
+        random.seed(seed) # apply this seed to img tranfsorms
+        torch.manual_seed(seed) # needed for torchvision 0.7
         if self.img_transforms is not None:
             image = self.img_transforms(image)
+            
+        random.seed(seed) # apply this seed to target tranfsorms
+        torch.manual_seed(seed) # needed for torchvision 0.7
         if self.mask_transforms is not None:
             mask = self.mask_transforms(mask)
+
         return image, mask
 
 def divide_dataset(
@@ -104,6 +110,46 @@ def divide_dataset(
 
     return data    
 
+def GraphVisualization(dataset: MyDataset, model=None, col=5, target_dir: str="./"):
+    rows = ['Images', 'Ground\nTruth\nMasks', 'Ground\nTruth\nFusions',
+            'Prediction\nMasks', 'Prediction\nFusions', 'Prediction V.S.\nGround Truth']
+    if model is None:
+        fig, axes = plt.subplots(nrows=3, ncols=col, figsize=(10,10))
+
+        for i in range(3):
+            axes[i][0].annotate(rows[i], xy=(0, 0.5), xytext=(-30,60),
+                                xycoords='axes points', textcoords='offset points',
+                                size='large', ha='center', va='center')
+
+        for i in range(5):
+            filename = Path(dataset.imgPaths[i]).stem
+            data = dataset.__getitem__(i)
+            mask = np.array(data[1]).squeeze()
+            invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                                 std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                            transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                                 std = [ 1., 1., 1. ])])
+            img = invTrans(data[0])
+            img = np.array(img).transpose(1,2,0)
+
+            axes[0][i].set_title(filename, {'fontsize': 8})
+            axes[0][i].get_xaxis().set_visible(False)
+            axes[0][i].get_yaxis().set_visible(False)
+            axes[0][i].imshow(img)
+            axes[1][i].get_xaxis().set_visible(False)
+            axes[1][i].get_yaxis().set_visible(False)
+            axes[1][i].imshow(mask, cmap='magma')
+            axes[2][i].get_xaxis().set_visible(False)
+            axes[2][i].get_yaxis().set_visible(False)
+            axes[2][i].imshow(img)
+            axes[2][i].imshow(mask, cmap='twilight', alpha=0.6)
+
+        fig.tight_layout(h_pad=-25)
+        plt.savefig(os.path.join(target_dir, 'sample.png'), dpi=500)
+        plt.show()
+    else:
+        pass
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-orig_img_dir',type=str)
@@ -123,14 +169,20 @@ if __name__=="__main__":
     
     if not os.path.exists(args.save_json):
         obtain_path(img_dir=args.orig_img_dir, mask_dir=args.orig_msk_dir, target_path=str(args.save_json))
-
+    
     channel_means = [0.485, 0.456, 0.406]
     channel_stds  = [0.229, 0.224, 0.225]
 
-    img_tsfm = transforms.Compose([transforms.ToTensor(),
-                                   transforms.Normalize(channel_means, channel_stds)])
-    mask_tsfm=transforms.Compose([transforms.ToTensor()])
-
+    img_tsfm=transforms.Compose([transforms.ToTensor(), 
+                                # transforms.Normalize(channel_means, channel_stds),
+                                transforms.RandomCrop((832, 832)), 
+                                transforms.RandomRotation(90), 
+                                transforms.RandomHorizontalFlip()])
+    mask_tsfm=transforms.Compose([transforms.ToTensor(), 
+                                # transforms.Normalize(channel_means, channel_stds),
+                                transforms.RandomCrop((832, 832)), 
+                                transforms.RandomRotation(90), 
+                                transforms.RandomHorizontalFlip()])
     # dataset = MyDataset('./dataset.json', img_tsfm, mask_tsfm)
     # dataloader = torch.utils.data.DataLoader( dataset,
     #                                           batch_size=1,
@@ -141,29 +193,35 @@ if __name__=="__main__":
     json_path = args.save_json
     dataset = divide_dataset(json_path, [0.7,0.1,0.2], True)
 
-    train_set = MyDataset(dataset, None, None, 'train')
+    train_set = MyDataset(dataset, img_tsfm, mask_tsfm, 'train')
     valid_set = MyDataset(dataset, None, None, 'valid')
     test_set = MyDataset(dataset, None, None, 'test')
 
-    _iterator_ = iter(valid_set)
+    _iterator_ = iter(train_set)
+    tsmf_flag = True
     for i in range(3):
         data = next(_iterator_)
-        print("max value: ",np.amin(data[1]))
+        if tsmf_flag:
+            img = np.moveaxis(data[0].numpy()*255, 0, -1).astype(np.uint8)
+            mask = data[1].numpy().squeeze()
+        else:
+            img = data[0]
+            mask = data[1]
         fig = plt.figure()
         ax = fig.add_subplot(131)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         ax.set_title('Original Image', fontdict={'fontsize': 8})
-        ax.imshow(data[0])
+        ax.imshow(img)
         ax = fig.add_subplot(132)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         ax.set_title('Original Mask', fontdict={'fontsize': 8})
-        ax.imshow(data[1])
+        ax.imshow(mask)
         ax = fig.add_subplot(133)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         ax.set_title('Original Image +\n Original Mask', fontdict={'fontsize': 8})
-        ax.imshow(data[0])
-        ax.imshow(data[1], alpha=0.4)
+        ax.imshow(img)
+        ax.imshow(mask, alpha=0.4)
         fig.savefig(os.path.join(args.save_samples, f'sample_{i}.jpg'), dpi=500)
