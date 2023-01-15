@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.functional as F
 import math
 
 def show_size(text: str, output_size, debug: bool=False):
@@ -144,6 +143,6 @@ class ResUNet(nn.Module):
 
 
 if __name__=="__main__":
-    input = torch.rand(4, 3, 512, 512)
+    input = torch.rand(4, 3, 832, 832)
     model = ResUNet(Block=ResBlock, DecBlock=DecBlock)
     model(input)
