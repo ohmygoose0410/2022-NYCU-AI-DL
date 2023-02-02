@@ -26,10 +26,10 @@ model structures and write them into reports (Bonus)
 ## Example
 1. Dataset - Test
 <p align="center">
-    <img src="img/test_output.png" width="360"\>
+    <img src="img/test_output.png" width="300"\>
 </p>
 
 2. Dataset - New Test
 <p align="center">
-    <img src="img/new_test_output.png" width="360"\>
+    <img src="img/new_test_output.png" width="300"\>
 </p>
