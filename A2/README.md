@@ -1,4 +1,4 @@
-## PyTorch-CNN
+## PyTorch-NN
 <strong>Lab Objective:</strong><br>
 In this assignment, we need to build a simple neural network (NN) with 3 hidden layers. This NN needs to have both forward pass and back-propagation functionality.<br>
 <strong>Requirements:</strong><br>
