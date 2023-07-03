@@ -13,33 +13,33 @@ scratch. Only Numpy and other Python standard libraries are allowed.
 
 ## Linear
 #### Example
-<p align="center">
+<p align="left">
     <img src="result/linear_prob.gif" width="360"\>
 </p>
 
 #### Training Loss
-<p align="center">
+<p align="left">
     <img src="result/linear_training_loss.png" width="360"\>
 </p>
 
 ## XOR
 #### Example
-<p align="center">
+<p align="left">
     <img src="result/XOR_prob.gif" width="360"\>
 </p>
 
 #### Training Loss
-<p align="center">
+<p align="left">
     <img src="result/XOR_training_loss.png" width="360"\>
 </p>
 
 ## Chessboard
 #### Example
-<p align="center">
+<p align="left">
     <img src="result/chessboard_prob.gif" width="360"\>
 </p>
 
 #### Training Loss
-<p align="center">
+<p align="left">
     <img src="result/chessboard_training_loss.png" width="360"\>
 </p>

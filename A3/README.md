@@ -14,22 +14,22 @@ training. And Output the correction results from test.json and new_test.json
 model structures and write them into reports (Bonus)
 
 ## Training Loss Curve
-<p align="center">
+<p align="left">
     <img src="img/training_loss.png" width="360"\>
 </p>
 
 ## BLEU-4 Testing Score Curve
-<p align="center">
+<p align="left">
     <img src="img/testing_score.png" width="360"\>
 </p>
 
 ## Example
 1. Dataset - Test
-<p align="center">
+<p align="left">
     <img src="img/test_output.png" width="300"\>
 </p>
 
 2. Dataset - New Test
-<p align="center">
+<p align="left">
     <img src="img/new_test_output.png" width="300"\>
 </p>

@@ -11,33 +11,33 @@ In this assignment, you will need to implement 3 kinds of GAN with EMNIST datase
 
 ## Conditional GAN
 #### Example
-<p align="center">
+<p align="left">
     <img src="cgan/cgan_pred_opti.gif" width="360"\>
 </p>
 
 #### Training Loss
-<p align="center">
+<p align="left">
     <img src="cgan/cgan_training_loss.jpg" width="360"\>
 </p>
 
 ## Deep Convolutional GAN
 #### Example
-<p align="center">
+<p align="left">
     <img src="dcgan/dcgan_pred_opti.gif" width="360"\>
 </p>
 
 #### Training Loss
-<p align="center">
+<p align="left">
     <img src="dcgan/dcgan_training_loss.jpg" width="360"\>
 </p>
 
 ## Wasserstein GAN GP
 #### Example
-<p align="center">
+<p align="left">
     <img src="wgan_gp/wgan_gp_pred_opti.gif" width="360"\>
 </p>
 
 #### Training Loss
-<p align="center">
+<p align="left">
     <img src="wgan_gp/wgan_gp_training_loss.jpg" width="360"\>
 </p>
