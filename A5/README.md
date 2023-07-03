@@ -17,10 +17,10 @@ matplotlib.
 ## UNet
 #### Training Loss
 <p align="left">
-    <img src="img/training_loss.png" width="400"\>
+    <img src="img/training_loss.png" width="600"\>
 </p>
 
 #### Results
 <p align="left">
-    <img src="img/output.png" width="400"\>
+    <img src="img/output.png" width="600"\>
 </p>
